@@ -224,7 +224,7 @@ export class Clipse {
   }
 
   ready(argv: string[] = []) {
-    if (argv.length === 0) argv.push(...Bun.argv.slice(2));
+    if (argv.length === 0) argv.push(...process.argv.slice(2));
     const options: { [key: string]: string | boolean | undefined } = {};
     Object.entries(this.#options).forEach(([key, value], _) => {
       if (
