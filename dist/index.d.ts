@@ -7,7 +7,6 @@ export type Clipse_Options = {
 		optional?: boolean;
 		default?: string | boolean;
 		description?: string;
-		multiple?: boolean;
 		type?: "string" | "boolean";
 	};
 };
@@ -22,16 +21,16 @@ export type Clipse_Function = (args: {
 }) => void;
 export declare class Clipse {
 	#private;
-	constructor(name: string);
+	constructor(name: string, description?: string, version?: string);
+	set name(name: string);
 	get name(): string;
-	description(description: string): this;
-	version(version: string): this;
+	set description(description: string);
+	get description(): string;
+	set version(version: string);
+	get version(): string;
 	help(): void;
-	addOption(option?: Clipse_Options): this;
 	addOptions(options?: Clipse_Options): this;
-	addArgument(arg: Clipse_Argument): this;
 	addArguments(args: Clipse_Argument[]): this;
-	addSubcommand(subcommand: Clipse): this;
 	addSubcommands(subcommands: Clipse[]): this;
 	action(a: Clipse_Function): this;
 	ready(argv?: string[]): void;

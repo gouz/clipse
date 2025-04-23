@@ -3,57 +3,106 @@ class Clipse {
   #name;
   #description = "";
   #version = "0.0.1";
-  #options = {};
+  #options = {
+    help: { short: "h", description: "show help", type: "boolean" },
+    version: { short: "v", description: "show version", type: "boolean" }
+  };
   #arguments = [];
   #subcommands = [];
   #action = () => {};
-  constructor(name) {
+  constructor(name, description = "", version = "") {
+    this.#name = name;
+    this.#description = description;
+    this.#version = version;
+  }
+  set name(name) {
     this.#name = name;
   }
   get name() {
     return this.#name;
   }
-  description(description) {
+  set description(description) {
     this.#description = description;
-    return this;
   }
-  version(version) {
+  get description() {
+    return this.#description;
+  }
+  set version(version) {
     this.#version = version;
-    return this;
+  }
+  get version() {
+    return this.#version;
+  }
+  #helpDesc(desc) {
+    return `\x1B[3m${desc}\x1B[0m`;
+  }
+  #helpMain() {
+    return `
+\x1B[1;36m${this.#name}\x1B[0m ${this.#version}
+${this.#helpDesc(this.description)}
+`;
+  }
+  #helpUsage() {
+    return `
+Usage: ${this.#name} [options] [arguments]
+
+`;
+  }
+  #helpSubs() {
+    let subs = "";
+    if (this.#subcommands.length) {
+      const maxLength = Math.max(...this.#subcommands.map((s) => s.name.length)) + 2;
+      subs = this.#subcommands.map((s) => `  \x1B[1m${s.name.padEnd(maxLength)}\x1B[0m ${this.#helpDesc(s.description)}
+`).join("");
+    }
+    return subs !== "" ? `\x1B[4mSubcommands:\x1B[0m
+${subs}
+` : "";
+  }
+  #helpOptions() {
+    const options = Object.entries(this.#options).filter(([_, v]) => typeof v.long === "undefined");
+    const maxLength = Math.max(...options.map(([k, v]) => `${typeof v.short !== "undefined" ? `-${v.short}, ` : ""}--${k}`.length)) + 2;
+    const opts = options.map(([k, v]) => [
+      `  \x1B[1m${`${typeof v.short !== "undefined" ? `-${v.short}, ` : ""}--${k}`.padEnd(maxLength)}\x1B[0m`,
+      this.#helpDesc(v.description ?? ""),
+      ` ${typeof v.default !== "undefined" ? `(default: ${v.default})` : ""}`,
+      `
+`
+    ].join(" ")).join("");
+    return opts !== "" ? `\x1B[4mOptions:\x1B[0m
+${opts}
+` : "";
+  }
+  #helpArguments() {
+    let args = "";
+    if (this.#arguments.length) {
+      const maxLength = Math.max(...this.#arguments.map((a) => a.name.length)) + 2;
+      args = this.#arguments.map((a) => `  \x1B[1m${a.name.padEnd(maxLength)}\x1B[0m ${this.#helpDesc(a.description ?? "")}
+`).join("");
+    }
+    return args !== "" ? `\x1B[4mArguments:\x1B[0m
+${args}
+` : "";
   }
   help() {
-    console.log(`${this.#name} ${this.#version}
-${this.#description}`);
-  }
-  addOption(option = {}) {
-    this.#options = { ...this.#options, ...option };
-    const opt = Object.values(option).at(0);
-    if (typeof opt?.short !== "undefined")
-      this.#options = {
-        ...this.#options,
-        [opt.short]: {
-          ...opt,
-          long: Object.keys(option).at(0)
-        }
-      };
-    return this;
+    console.log(this.#helpMain() + this.#helpUsage() + this.#helpSubs() + this.#helpOptions() + this.#helpArguments());
   }
   addOptions(options = {}) {
     Object.entries(options).forEach(([k, v], _) => {
-      this.addOption({ [k]: v });
+      this.#options = { ...this.#options, [k]: v };
+      if (typeof v?.short !== "undefined")
+        this.#options = {
+          ...this.#options,
+          [v.short]: {
+            ...v,
+            long: k
+          }
+        };
     });
-    return this;
-  }
-  addArgument(arg) {
-    this.#arguments.push(arg);
     return this;
   }
   addArguments(args) {
     this.#arguments.push(...args);
-    return this;
-  }
-  addSubcommand(subcommand) {
-    this.#subcommands.push(subcommand);
     return this;
   }
   addSubcommands(subcommands) {
