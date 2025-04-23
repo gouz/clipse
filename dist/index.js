@@ -167,7 +167,7 @@ ${args}
   }
   ready(argv = []) {
     if (argv.length === 0)
-      argv.push(...Bun.argv.slice(2));
+      argv.push(...process.argv.slice(2));
     const options = {};
     Object.entries(this.#options).forEach(([key, value], _) => {
       if (value.optional !== true && typeof value.default !== "undefined" && typeof value.long === "undefined")

@@ -2,8 +2,6 @@
 
 CLI Parsing So Easy
 
-This package works only with Bun.sh .
-
 ## Introduction
 
 Clipse helps you to build a CLI Tool. It provides a simple and intuitive way to define and handle command-line arguments and options, making it easier to create powerful and user-friendly command-line tools.
