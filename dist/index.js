@@ -176,8 +176,11 @@ ${args}
     if (argv.length) {
       if (argv[0] === "-h" || argv[0] === "--help") {
         this.help();
-      } else if (argv[0] === "-v" || argv[0] === "--version") {
+        return;
+      }
+      if (argv[0] === "-v" || argv[0] === "--version") {
         console.log(this.#version);
+        return;
       }
       const sub = this.#subcommands.filter((s) => s.name === argv[0]).shift();
       if (sub) {
