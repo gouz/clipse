@@ -242,11 +242,11 @@ export class Clipse {
     if (argv.length) {
       if (argv[0] === "-h" || argv[0] === "--help") {
         this.help();
-        return;
+        process.exit(0);
       }
       if (argv[0] === "-v" || argv[0] === "--version") {
         console.log(this.#version);
-        return;
+        process.exit(0);
       }
       // check if subcommand
       const sub = this.#subcommands.filter((s) => s.name === argv[0]).shift();
@@ -264,6 +264,5 @@ export class Clipse {
     } else {
       await this.#action({}, options);
     }
-    process.exit(0);
   }
 }

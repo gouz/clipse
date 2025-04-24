@@ -9,7 +9,7 @@ class Clipse {
   };
   #arguments = [];
   #subcommands = [];
-  #action = () => {};
+  #action = async () => {};
   constructor(name, description = "", version = "") {
     this.#name = name;
     this.#description = description;
@@ -165,7 +165,7 @@ ${args}
     });
     return args;
   }
-  ready(argv = []) {
+  async ready(argv = []) {
     if (argv.length === 0)
       argv.push(...process.argv.slice(2));
     const options = {};
@@ -176,11 +176,11 @@ ${args}
     if (argv.length) {
       if (argv[0] === "-h" || argv[0] === "--help") {
         this.help();
-        return;
+        process.exit(0);
       }
       if (argv[0] === "-v" || argv[0] === "--version") {
         console.log(this.#version);
-        return;
+        process.exit(0);
       }
       const sub = this.#subcommands.filter((s) => s.name === argv[0]).shift();
       if (sub) {
@@ -192,10 +192,10 @@ ${args}
           ...this.#parseOptions(argv)
         };
         const args = this.#parseArguments(argv);
-        this.#action(args, opts);
+        await this.#action(args, opts);
       }
     } else {
-      this.#action({}, options);
+      await this.#action({}, options);
     }
   }
 }
