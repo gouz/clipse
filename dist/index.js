@@ -10,6 +10,7 @@ class Clipse {
   #arguments = [];
   #subcommands = [];
   #action = async () => {};
+  #parent = "";
   constructor(name, description = "", version = "") {
     this.#name = name;
     this.#description = description;
@@ -38,13 +39,13 @@ class Clipse {
   }
   #helpMain() {
     return `
-\x1B[1;36m${this.#name}\x1B[0m ${this.#version}
+\x1B[1;36m${this.#parent}${this.#name}\x1B[0m ${this.#version}
 ${this.#helpDesc(this.description)}
 `;
   }
   #helpUsage() {
     return `
-Usage: ${this.#name} [options] [arguments]
+Usage: ${this.#parent}${this.#name} [options] [arguments]
 
 `;
   }
@@ -165,7 +166,8 @@ ${args}
     });
     return args;
   }
-  async ready(argv = []) {
+  async ready(argv = [], parent = "") {
+    this.#parent = parent;
     if (argv.length === 0)
       argv.push(...process.argv.slice(2));
     const options = {};
@@ -185,7 +187,7 @@ ${args}
       const sub = this.#subcommands.filter((s) => s.name === argv[0]).shift();
       if (sub) {
         argv.shift();
-        sub.ready(argv);
+        sub.ready(argv, `${this.#parent}${this.#name} `);
       } else {
         const opts = {
           ...options,

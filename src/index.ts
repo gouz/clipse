@@ -35,6 +35,7 @@ export class Clipse {
   #arguments: Clipse_Argument[] = [];
   #subcommands: Clipse[] = [];
   #action: Clipse_Function = async () => {};
+  #parent = "";
 
   constructor(name: string, description = "", version = "") {
     this.#name = name;
@@ -71,11 +72,11 @@ export class Clipse {
   }
 
   #helpMain() {
-    return `\n\x1b[1;36m${this.#name}\x1b[0m ${this.#version}\n${this.#helpDesc(this.description)}\n`;
+    return `\n\x1b[1;36m${this.#parent}${this.#name}\x1b[0m ${this.#version}\n${this.#helpDesc(this.description)}\n`;
   }
 
   #helpUsage() {
-    return `\nUsage: ${this.#name} [options] [arguments]\n\n`;
+    return `\nUsage: ${this.#parent}${this.#name} [options] [arguments]\n\n`;
   }
 
   #helpSubs() {
@@ -228,7 +229,8 @@ export class Clipse {
     return args;
   }
 
-  async ready(argv: string[] = []) {
+  async ready(argv: string[] = [], parent = "") {
+    this.#parent = parent;
     if (argv.length === 0) argv.push(...process.argv.slice(2));
     const options: { [key: string]: string | boolean | undefined } = {};
     Object.entries(this.#options).forEach(([key, value], _) => {
@@ -252,7 +254,7 @@ export class Clipse {
       const sub = this.#subcommands.filter((s) => s.name === argv[0]).shift();
       if (sub) {
         argv.shift();
-        sub.ready(argv);
+        sub.ready(argv, `${this.#parent}${this.#name} `);
       } else {
         const opts = {
           ...options,
