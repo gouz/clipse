@@ -67,6 +67,9 @@ describe("clipse", () => {
 
   it("should show the help", () => {
     const spy = spyOn(mycli, "help");
+    spyOn(process, "exit").mockImplementation(
+      (_?: string | number | null | undefined) => undefined as never,
+    );
     mycli.ready(["-h"]);
     expect(spy).toHaveBeenCalled();
   });

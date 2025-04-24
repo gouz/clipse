@@ -14,10 +14,15 @@ export type Clipse_Argument = {
   description?: string;
 };
 
-export type Clipse_Function = (
-  args: { [key: string]: string | undefined },
-  opts: { [key: string]: string | boolean | undefined },
-) => void;
+export type Clipse_Function =
+  | ((
+      args: { [key: string]: string | undefined },
+      opts: { [key: string]: string | boolean | undefined },
+    ) => Promise<void>)
+  | ((
+      args: { [key: string]: string | undefined },
+      opts: { [key: string]: string | boolean | undefined },
+    ) => void);
 
 export class Clipse {
   #name: string;
@@ -29,7 +34,7 @@ export class Clipse {
   };
   #arguments: Clipse_Argument[] = [];
   #subcommands: Clipse[] = [];
-  #action: Clipse_Function = () => {};
+  #action: Clipse_Function = async () => {};
 
   constructor(name: string, description = "", version = "") {
     this.#name = name;
@@ -223,7 +228,7 @@ export class Clipse {
     return args;
   }
 
-  ready(argv: string[] = []) {
+  async ready(argv: string[] = []) {
     if (argv.length === 0) argv.push(...process.argv.slice(2));
     const options: { [key: string]: string | boolean | undefined } = {};
     Object.entries(this.#options).forEach(([key, value], _) => {
@@ -254,10 +259,11 @@ export class Clipse {
           ...this.#parseOptions(argv),
         };
         const args = this.#parseArguments(argv);
-        this.#action(args, opts);
+        await this.#action(args, opts);
       }
     } else {
-      this.#action({}, options);
+      await this.#action({}, options);
     }
+    process.exit(0);
   }
 }
