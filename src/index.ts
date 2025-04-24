@@ -231,7 +231,7 @@ export class Clipse {
 
   async ready(argv: string[] = [], parent = "") {
     this.#parent = parent;
-    if (argv.length === 0) argv.push(...process.argv.slice(2));
+    if (argv.length === 0 && parent === "") argv.push(...process.argv.slice(2));
     const options: { [key: string]: string | boolean | undefined } = {};
     Object.entries(this.#options).forEach(([key, value], _) => {
       if (

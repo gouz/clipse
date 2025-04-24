@@ -202,7 +202,7 @@ ${args}
   }
   async ready(argv = [], parent = "") {
     this.#parent = parent;
-    if (argv.length === 0)
+    if (argv.length === 0 && parent === "")
       argv.push(...process.argv.slice(2));
     const options = {};
     Object.entries(this.#options).forEach(([key, value], _) => {
