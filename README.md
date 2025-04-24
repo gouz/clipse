@@ -10,7 +10,7 @@ Clipse helps you to build a CLI Tool. It provides a simple and intuitive way to 
 import { Clipse } from "clipse";
 
 const subcli = new Clipse("sub");
-subcli.addSubcommands([subsubcli]).action(() => {
+subcli.action(() => {
   sub();
 });
 
