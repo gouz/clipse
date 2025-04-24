@@ -14,11 +14,15 @@ export type Clipse_Argument = {
 	name: string;
 	description?: string;
 };
-export type Clipse_Function = (args: {
+export type Clipse_Function = ((args: {
 	[key: string]: string | undefined;
 }, opts: {
 	[key: string]: string | boolean | undefined;
-}) => void;
+}) => Promise<void>) | ((args: {
+	[key: string]: string | undefined;
+}, opts: {
+	[key: string]: string | boolean | undefined;
+}) => void);
 export declare class Clipse {
 	#private;
 	constructor(name: string, description?: string, version?: string);
@@ -33,7 +37,7 @@ export declare class Clipse {
 	addArguments(args: Clipse_Argument[]): this;
 	addSubcommands(subcommands: Clipse[]): this;
 	action(a: Clipse_Function): this;
-	ready(argv?: string[]): void;
+	ready(argv?: string[]): Promise<void>;
 }
 
 export {};
