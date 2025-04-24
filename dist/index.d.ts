@@ -37,7 +37,7 @@ export declare class Clipse {
 	addArguments(args: Clipse_Argument[]): this;
 	addSubcommands(subcommands: Clipse[]): this;
 	action(a: Clipse_Function): this;
-	ready(argv?: string[]): Promise<void>;
+	ready(argv?: string[], parent?: string): Promise<void>;
 }
 
 export {};
