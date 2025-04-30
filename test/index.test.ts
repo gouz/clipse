@@ -28,11 +28,13 @@ describe("clipse", () => {
           default: "test",
           type: "string",
           description: "an option for test",
+          optional: true,
         },
         bool: {
           default: true,
           type: "boolean",
           description: "a boolean option true per default",
+          optional: false,
         },
         faux: {
           type: "boolean",
@@ -86,37 +88,37 @@ describe("clipse", () => {
   it("should give me arguments and options", () => {
     mycli.ready(["--opt", "plop", "plip"]);
     expect(args).toEqual({ arg: "plip" });
-    expect(opts).toEqual({ opt: "plop", faux: false, bool: true });
+    expect(opts).toEqual({ opt: "plop", bool: true, faux: false });
   });
 
   it("should give me arguments and options without equals sign", () => {
     mycli.ready(["plip", "--opt", "plop"]);
     expect(args).toEqual({ arg: "plip" });
-    expect(opts).toEqual({ opt: "plop", faux: false, bool: true });
+    expect(opts).toEqual({ opt: "plop", bool: true, faux: false });
   });
 
   it("should give me arguments and options with default value", () => {
     mycli.ready(["plip", "--opt"]);
     expect(args).toEqual({ arg: "plip" });
-    expect(opts).toEqual({ opt: "test", faux: false, bool: true });
+    expect(opts).toEqual({ opt: "test", bool: true, faux: false });
   });
 
   it("should give me arguments and options with default value and short call", () => {
     mycli.ready(["plip", "-o"]);
     expect(args).toEqual({ arg: "plip" });
-    expect(opts).toEqual({ opt: "test", faux: false, bool: true });
+    expect(opts).toEqual({ opt: "test", bool: true, faux: false });
   });
 
   it("should give me arguments and options with short call", () => {
     mycli.ready(["-o", "plop", "plip"]);
     expect(args).toEqual({ arg: "plip" });
-    expect(opts).toEqual({ opt: "plop", faux: false, bool: true });
+    expect(opts).toEqual({ opt: "plop", bool: true, faux: false });
   });
 
   it("should give me arguments and options with short call", () => {
     mycli.ready(["plip", "-o", "plop"]);
     expect(args).toEqual({ arg: "plip" });
-    expect(opts).toEqual({ opt: "plop", faux: false, bool: true });
+    expect(opts).toEqual({ opt: "plop", bool: true, faux: false });
   });
 
   it("should not call the sub cli", () => {
@@ -137,18 +139,45 @@ describe("clipse", () => {
   it("should capture options with equals", () => {
     mycli.ready(["plip", "-o=plop"]);
     expect(args).toEqual({ arg: "plip" });
-    expect(opts).toEqual({ opt: "plop", faux: false, bool: true });
+    expect(opts).toEqual({ opt: "plop", bool: true, faux: false });
   });
 
   it("should capture options with equals", () => {
     mycli.ready(["plip", "--opt=plop"]);
     expect(args).toEqual({ arg: "plip" });
-    expect(opts).toEqual({ opt: "plop", faux: false, bool: true });
+    expect(opts).toEqual({ opt: "plop", bool: true, faux: false });
   });
 
   it("should set boolean options to true", () => {
     mycli.ready(["plip", "--opt=plop", "--faux"]);
     expect(args).toEqual({ arg: "plip" });
     expect(opts).toEqual({ opt: "plop", faux: true, bool: true });
+  });
+
+  it("should not return optional parameters", () => {
+    mycli.addOptions({
+      option: {
+        optional: true,
+        type: "boolean",
+        default: false,
+      },
+      optchar: {
+        type: "string",
+        default: "I'm here",
+      },
+      optcharnotopt: {
+        type: "string",
+        default: "I'm not here",
+        optional: false,
+      },
+    });
+    mycli.ready(["plip"]);
+    expect(args).toEqual({ arg: "plip" });
+    expect(opts).toEqual({
+      bool: true,
+      faux: false,
+      optchar: "I'm here",
+      optcharnotopt: "I'm not here",
+    });
   });
 });
