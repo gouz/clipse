@@ -256,12 +256,12 @@ export class Clipse {
     if (argv.length === 0 && parent === "") argv.push(...process.argv.slice(2));
     const options: { [key: string]: string | boolean | undefined } = {};
     Object.entries(this.#options).forEach(([key, value], _) => {
-      if (typeof value.long === "undefined") {
-        if (value.type === "boolean" && !["help", "version"].includes(key))
-          options[key] = value.default ?? false;
-        if (value.optional === true && typeof value.default !== "undefined")
-          options[key] = value.default;
-      }
+      if (
+        typeof value.long === "undefined" &&
+        (typeof value.optional === "undefined" || !value.optional) &&
+        !["help", "version"].includes(key)
+      )
+        options[key] = value.default ?? (value.type === "boolean" ? false : "");
     });
     if (argv.length) {
       if (argv[0] === "-h" || argv[0] === "--help") {
