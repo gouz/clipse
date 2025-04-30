@@ -94,22 +94,28 @@ export class Clipse {
     return subs !== "" ? `\x1b[4mSubcommands:\x1b[0m\n${subs}\n` : "";
   }
 
+  #getVerboseOption(o: Clipse_Options) {
+    const [k, v] = Object.entries(o).at(0) ?? [];
+    if (k && v) {
+      const short = typeof v.short !== "undefined" ? `-${v.short}, ` : "";
+      const param = v.type === "boolean" ? "" : " <param>";
+      return `${short}--${k}${param}`;
+    }
+    return "";
+  }
+
   #helpOptions() {
     const options = Object.entries(this.#options).filter(
       ([_, v]) => typeof v.long === "undefined",
     );
     const maxLength =
       Math.max(
-        ...options.map(
-          ([k, v]) =>
-            `${typeof v.short !== "undefined" ? `-${v.short}, ` : ""}--${k}`
-              .length,
-        ),
-      ) + 2;
+        ...options.map(([k, v]) => this.#getVerboseOption({ [k]: v }).length),
+      ) + 1;
     const opts = options
       .map(([k, v]) =>
         [
-          `  \x1b[1m${`${typeof v.short !== "undefined" ? `-${v.short}, ` : ""}--${k}`.padEnd(maxLength)}\x1b[0m`,
+          `  \x1b[1m${this.#getVerboseOption({ [k]: v }).padEnd(maxLength)}\x1b[0m`,
           this.#helpDesc(v.description ?? ""),
           ` ${typeof v.default !== "undefined" ? `(default: ${v.default})` : ""}`,
           "\n",
@@ -123,7 +129,7 @@ export class Clipse {
     let args = "";
     if (this.#arguments.length) {
       const maxLength =
-        Math.max(...this.#arguments.map((a) => a.name.length)) + 2;
+        Math.max(...this.#arguments.map((a) => a.name.length)) + 1;
       args = this.#arguments
         .map(
           (a) =>
@@ -174,51 +180,67 @@ export class Clipse {
     return this;
   }
 
-  #parseOptions(argv: string[]) {
-    const options: { [key: string]: string | boolean | undefined } = {};
-    argv.forEach((ar, i) => {
-      if (/^-[a-z]+$/.exec(ar)) {
-        // shorts
-        const shorts = ar.substring(1).split("");
-        shorts.forEach((s, j) => {
-          if (this.#options[s]?.type !== "boolean") {
-            if (j === shorts.length - 1) {
-              if (!argv[i + 1]?.startsWith("-")) {
-                options[this.#options[s]?.long ?? ""] =
-                  argv[i + 1] ?? this.#options[s]?.default;
-                argv.splice(i + 1, 1);
-              }
-            } else {
-              options[this.#options[s]?.long ?? ""] = this.#options[s]?.default;
+  #parseShortOptions(
+    argv: string[],
+    ar: string,
+    options: { [key: string]: string | boolean | undefined },
+  ) {
+    if (ar.includes("=")) {
+      const [k, v] = ar.substring(1).split("=", 2);
+      options[this.#options[k as string]?.long ?? ""] = v;
+    } else {
+      const shorts = ar.substring(1).split("");
+      shorts.forEach((s, j) => {
+        if (this.#options[s]?.type !== "boolean") {
+          if (j === shorts.length - 1) {
+            if (!argv[1]?.startsWith("-")) {
+              options[this.#options[s]?.long ?? ""] =
+                argv[1] ?? this.#options[s]?.default;
+              argv.shift();
             }
           } else {
-            options[this.#options[s].long ?? ""] = true;
-          }
-        });
-        argv.splice(i, 1);
-      } else if (ar.startsWith("--")) {
-        const a = ar.substring(2);
-        if (a.includes("=")) {
-          const [k, v] = a.split("=", 2);
-          options[k as string] = v;
-        } else if (this.#options[a]?.type !== "boolean") {
-          if (i === argv.length - 1) {
-            options[a] = this.#options[a]?.default;
-          } else {
-            options[a] = argv[i + 1];
-            argv.splice(i + 1, 1);
+            options[this.#options[s]?.long ?? ""] = this.#options[s]?.default;
           }
         } else {
-          options[a] = true;
+          options[this.#options[s].long ?? ""] = true;
         }
-        argv.splice(i, 1);
-      } else if (ar.startsWith("-") && ar.includes("=")) {
-        const [k, v] = ar.substring(1).split("=", 2);
-        options[this.#options[k as string]?.long ?? ""] = v;
-        argv.splice(i, 1);
+      });
+    }
+    argv.shift();
+  }
+
+  #parseLongOptions(
+    argv: string[],
+    ar: string,
+    options: { [key: string]: string | boolean | undefined },
+  ) {
+    const a = ar.substring(2);
+    if (a.includes("=")) {
+      const [k, v] = a.split("=", 2);
+      options[k as string] = v;
+    } else if (this.#options[a]?.type !== "boolean") {
+      if (argv.length === 1) {
+        options[a] = this.#options[a]?.default;
+      } else {
+        options[a] = argv[1];
+        argv.shift();
       }
-    });
-    return options;
+    } else {
+      options[a] = true;
+    }
+    argv.shift();
+  }
+
+  #parseOptions(argv: string[]) {
+    const options: { [key: string]: string | boolean | undefined } = {};
+    const args: string[] = [];
+    while (argv.length) {
+      const ar = argv[0] ?? "";
+      if (/^-[a-z=]+$/.exec(ar)) this.#parseShortOptions(argv, ar, options);
+      else if (ar.startsWith("--")) this.#parseLongOptions(argv, ar, options);
+      else args.push(argv.shift() ?? "");
+    }
+    return { options, args };
   }
 
   #parseArguments(argv: string[]) {
@@ -235,11 +257,11 @@ export class Clipse {
     const options: { [key: string]: string | boolean | undefined } = {};
     Object.entries(this.#options).forEach(([key, value], _) => {
       if (
-        value.optional !== true &&
-        typeof value.default !== "undefined" &&
-        typeof value.long === "undefined"
+        value.type === "boolean" &&
+        typeof value.long === "undefined" &&
+        !["help", "version"].includes(key)
       )
-        options[key] = value.default;
+        options[key] = value.default ?? false;
     });
     if (argv.length) {
       if (argv[0] === "-h" || argv[0] === "--help") {
@@ -256,11 +278,12 @@ export class Clipse {
         argv.shift();
         sub.ready(argv, `${this.#parent}${this.#name} `);
       } else {
+        const parsedOptions = this.#parseOptions([...argv]);
         const opts = {
           ...options,
-          ...this.#parseOptions(argv),
+          ...parsedOptions.options,
         };
-        const args = this.#parseArguments(argv);
+        const args = this.#parseArguments([...parsedOptions.args]);
         await this.#action(args, opts);
       }
     } else {
