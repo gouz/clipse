@@ -37,6 +37,7 @@ describe("clipse", () => {
           optional: false,
         },
         faux: {
+          short: "f",
           type: "boolean",
           description: "a boolean option false per default",
         },
@@ -178,6 +179,43 @@ describe("clipse", () => {
       faux: false,
       optchar: "I'm here",
       optcharnotopt: "I'm not here",
+    });
+  });
+
+  it("should manage many short collapsed options", () => {
+    mycli.ready(["-fo", "plop"]);
+    expect(args).toEqual({});
+    expect(opts).toEqual({
+      bool: true,
+      faux: true,
+      opt: "plop",
+    });
+  });
+
+  it("should manage many short options", () => {
+    mycli.ready(["-o", "-f"]);
+    expect(args).toEqual({});
+    expect(opts).toEqual({
+      bool: true,
+      faux: true,
+      opt: "test",
+    });
+  });
+
+  it("should manage mixed options", () => {
+    mycli.addOptions({
+      optchar: {
+        type: "string",
+        default: "I'm here",
+      },
+    });
+    mycli.ready(["--opt", "test", "-f", "--optchar"]);
+    expect(args).toEqual({});
+    expect(opts).toEqual({
+      bool: true,
+      faux: true,
+      opt: "test",
+      optchar: "I'm here",
     });
   });
 });

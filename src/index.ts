@@ -197,6 +197,8 @@ export class Clipse {
               options[this.#options[s]?.long ?? ""] =
                 argv[1] ?? this.#options[s]?.default;
               argv.shift();
+            } else {
+              options[this.#options[s]?.long ?? ""] = this.#options[s]?.default;
             }
           } else {
             options[this.#options[s]?.long ?? ""] = this.#options[s]?.default;
