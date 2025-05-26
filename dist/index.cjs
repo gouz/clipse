@@ -33,6 +33,14 @@ __export(exports_src, {
 });
 module.exports = __toCommonJS(exports_src);
 
+// node:os
+var homedir = function() {
+  return "/";
+};
+
+// src/index.ts
+var import_node_fs = (() => ({}));
+
 class Clipse {
   #name;
   #description = "";
@@ -128,8 +136,14 @@ ${opts}
 ${args}
 ` : "";
   }
+  #helpCompletion() {
+    return `
+You can generate a completion script for your CLI by running:
+\x1B[3m$ ${this.#name} generate-completion\x1B[0m
+    `;
+  }
   help() {
-    console.log(this.#helpMain() + this.#helpUsage() + this.#helpSubs() + this.#helpOptions() + this.#helpArguments());
+    console.log(this.#helpMain() + this.#helpUsage() + this.#helpSubs() + this.#helpOptions() + this.#helpArguments() + this.#helpCompletion());
   }
   addOptions(options = {}) {
     Object.entries(options).forEach(([k, v], _) => {
@@ -221,6 +235,51 @@ ${args}
     });
     return args;
   }
+  getGenerationCompletionLine() {
+    return [
+      ...new Set([
+        ...this.#subcommands.map((c) => c.name),
+        ...Object.keys(this.#options).map((o) => `--${o}`),
+        ...Object.values(this.#options).map((o) => o.short ?? "").filter((f) => f !== "").map((o) => `-${o}`)
+      ])
+    ].join(" ");
+  }
+  #generateCompletion() {
+    const bash = `
+#/usr/bin/env bash
+_${this.#name}_completions()
+{
+    local cur prev
+
+    cur=\${COMP_WORDS[COMP_CWORD]}
+    prev=\${COMP_WORDS[COMP_CWORD-1]}
+
+    case \${COMP_CWORD} in
+        1)
+            COMPREPLY=($(compgen -W "${this.getGenerationCompletionLine()}" -- \${cur}))
+            ;;
+        2)
+            case \${prev} in
+                ${this.#subcommands.map((s) => `
+                ${s.name})
+                    COMPREPLY=($(compgen -W "${s.getGenerationCompletionLine()}" -- \${cur}))
+                    ;;
+                `).join(`
+`)}
+            esac
+            ;;
+        *)
+            COMPREPLY=()
+            ;;
+    esac
+}
+complete -F _${this.#name}_completions ${this.#name}
+`;
+    import_node_fs.writeFileSync(`${homedir()}/.clipse.${this.#name}.bash`, bash, {
+      flag: "w+"
+    });
+    console.log(`source ${homedir()}/.clipse.${this.#name}.bash`);
+  }
   async ready(argv = [], parent = "") {
     this.#parent = parent;
     if (argv.length === 0 && parent === "")
@@ -244,6 +303,10 @@ ${args}
         argv.shift();
         sub.ready(argv, `${this.#parent}${this.#name} `);
       } else {
+        if (argv[0] === "generate-completion") {
+          this.#generateCompletion();
+          process.exit(0);
+        }
         const parsedOptions = this.#parseOptions([...argv]);
         const opts = {
           ...options,
