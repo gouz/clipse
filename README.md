@@ -50,6 +50,9 @@ Options:
 
 Arguments:
   arg   an argument for test
+
+You can generate a completion script for your CLI by running:
+$ mycli generate-completion
 ```
 
 ## Add Options
@@ -123,3 +126,15 @@ Then in the action function, your args will be :
 Clipse allows you to have sub commands with your Clipse
 
 Attention, you must not name an argument like a subcommand !
+
+## Generate Bash Completion Script
+
+Clipse includes a bash completion script generator. You can generate it by calling the internal subcommand `generate-completion` of your CLI.
+
+Example:
+
+```bash
+mycli generate-completion
+```
+
+It will generate a `.clipse.<name>.bash` file in your home directory, which you can source to enable bash completion for your CLI.
