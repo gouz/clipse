@@ -1,0 +1,9 @@
+{
+    "name": "example",
+    "version": "0.0.1",
+    "description": "Example package",
+    "main": "index.js",
+    "scripts": {
+        "make": "bun build ./index.ts --outfile mycli --compile --minify"
+    }
+}
