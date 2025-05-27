@@ -22,7 +22,7 @@
     "prepublishOnly": "bun run build"
   },
   "files": ["dist"],
-  "keywords": ["bun", "cli"],
+  "keywords": ["parser", "cli", "tooling"],
   "license": "MIT",
   "homepage": "https://github.com/gouz/clipse#readme",
   "repository": {
