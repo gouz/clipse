@@ -29,7 +29,8 @@ mycli
   .action((a, o) => {
     args = a;
     opts = o;
-  });
+  })
+  .ready();
 ```
 
 Will done:
