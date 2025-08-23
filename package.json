@@ -1,6 +1,6 @@
 {
   "name": "clipse",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -19,7 +19,9 @@
   },
   "scripts": {
     "build": "bun run build.ts",
-    "prepublishOnly": "bun run build"
+    "prepublishOnly": "bun run build",
+    "format": "bunx @biomejs/biome format ./ --write",
+    "lint": "bunx @biomejs/biome lint ./ --write"
   },
   "files": ["dist"],
   "keywords": ["parser", "cli", "tooling"],

@@ -35,6 +35,7 @@ export class Clipse {
     help: { short: "h", description: "show help", type: "boolean" },
     version: { short: "v", description: "show version", type: "boolean" },
   };
+  #globalOptions: Clipse_Options = {};
   #arguments: Clipse_Argument[] = [];
   #subcommands: Clipse[] = [];
   #action: Clipse_Function = async () => {};
@@ -176,6 +177,21 @@ You can generate a completion script for your CLI by running:
     return this;
   }
 
+  addGlobalOptions(options: Clipse_Options = {}) {
+    Object.entries(options).forEach(([k, v], _) => {
+      this.#globalOptions = { ...this.#globalOptions, [k]: v };
+      if (typeof v?.short !== "undefined")
+        this.#globalOptions = {
+          ...this.#globalOptions,
+          [v.short as string]: {
+            ...v,
+            long: k,
+          },
+        };
+    });
+    return this;
+  }
+
   addArguments(args: Clipse_Argument[]) {
     this.#arguments.push(...args);
     return this;
@@ -268,8 +284,10 @@ You can generate a completion script for your CLI by running:
     return [
       ...new Set([
         ...this.#subcommands.map((c) => c.name),
-        ...Object.keys(this.#options).map((o) => `--${o}`),
-        ...Object.values(this.#options)
+        ...Object.keys({ ...this.#options, ...this.#globalOptions }).map(
+          (o) => `--${o}`,
+        ),
+        ...Object.values({ ...this.#options, ...this.#globalOptions })
           .map((o) => o.short ?? "")
           .filter((f) => f !== "")
           .map((o) => `-${o}`),
@@ -342,6 +360,7 @@ complete -F _${this.#name}_completions ${this.#name}
       const sub = this.#subcommands.filter((s) => s.name === argv[0]).shift();
       if (sub) {
         argv.shift();
+        sub.addOptions(this.#globalOptions);
         sub.ready(argv, `${this.#parent}${this.#name} `);
       } else {
         if (argv[0] === "generate-completion") {

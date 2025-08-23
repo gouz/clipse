@@ -1,7 +1,5 @@
 // node:os
-var homedir = function() {
-  return "/";
-};
+var homedir = () => "/";
 
 // src/index.ts
 var {writeFileSync} = (() => ({}));
