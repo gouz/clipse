@@ -13,7 +13,9 @@ describe("clipse", () => {
   });
 
   const subcli = new Clipse("sub", "a sub command");
-  subcli.addSubcommands([subsubcli]).action(() => {
+  subcli.addSubcommands([subsubcli]).action((a, o) => {
+    args = a;
+    opts = o;
     sub();
   });
 
@@ -216,6 +218,19 @@ describe("clipse", () => {
       faux: true,
       opt: "test",
       optchar: "I'm here",
+    });
+  });
+
+  it("should manage globalOptions", () => {
+    mycli.addGlobalOptions({
+      gopt: {
+        type: "string",
+        default: "I'm global",
+      },
+    });
+    mycli.ready(["sub"]);
+    expect(opts).toEqual({
+      gopt: "I'm global",
     });
   });
 });

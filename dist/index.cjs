@@ -34,9 +34,7 @@ __export(exports_src, {
 module.exports = __toCommonJS(exports_src);
 
 // node:os
-var homedir = function() {
-  return "/";
-};
+var homedir = () => "/";
 
 // src/index.ts
 var import_node_fs = (() => ({}));

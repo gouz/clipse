@@ -40,5 +40,3 @@ export declare class Clipse {
 	getGenerationCompletionLine(): string;
 	ready(argv?: string[], parent?: string): Promise<void>;
 }
-
-export {};
