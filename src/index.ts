@@ -109,9 +109,10 @@ export class Clipse {
   }
 
   #helpOptions() {
-    const options = Object.entries(this.#options).filter(
-      ([_, v]) => typeof v.long === "undefined",
-    );
+    const options = [
+      ...Object.entries(this.#options),
+      ...Object.entries(this.#globalOptions),
+    ].filter(([_, v]) => typeof v.long === "undefined");
     const maxLength =
       Math.max(
         ...options.map(([k, v]) => this.#getVerboseOption({ [k]: v }).length),

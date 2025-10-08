@@ -1,6 +1,6 @@
 {
   "name": "clipse",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -23,8 +23,14 @@
     "format": "bunx @biomejs/biome format ./ --write",
     "lint": "bunx @biomejs/biome lint ./ --write"
   },
-  "files": ["dist"],
-  "keywords": ["parser", "cli", "tooling"],
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "parser",
+    "cli",
+    "tooling"
+  ],
   "license": "MIT",
   "homepage": "https://github.com/gouz/clipse#readme",
   "repository": {
