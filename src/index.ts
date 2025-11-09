@@ -330,10 +330,9 @@ _${this.#name}_completions()
 }
 complete -F _${this.#name}_completions ${this.#name}
 `;
-    writeFileSync(`${homedir()}/.clipse.${this.#name}.bash`, bash, {
-      flag: "w+",
-    });
-    console.log(`source ${homedir()}/.clipse.${this.#name}.bash`);
+    console.log(`Copy this into ~/.clipse.${this.#name}.bash`);
+    console.log(bash);
+    console.log(`Then execute: source ~/.clipse.${this.#name}.bash`);
   }
 
   async ready(argv: string[] = [], parent = "") {
