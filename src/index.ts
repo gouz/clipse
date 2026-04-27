@@ -40,6 +40,7 @@ export class Clipse {
   #subcommands: Clipse[] = [];
   #action: Clipse_Function = async () => {};
   #parent = "";
+  #defaultcmd: Clipse | null = null;
 
   constructor(name: string, description = "", version = "") {
     this.#name = name;
@@ -203,6 +204,11 @@ You can generate a completion script for your CLI by running:
     return this;
   }
 
+  defineDefaultCommand(cmd: Clipse) {
+    this.#defaultcmd = cmd;
+    return this;
+  }
+
   action(a: Clipse_Function) {
     this.#action = a;
     return this;
@@ -356,9 +362,12 @@ complete -F _${this.#name}_completions ${this.#name}
         console.log(this.#version);
         process.exit(0);
       }
-      // check if subcommand
       const sub = this.#subcommands.filter((s) => s.name === argv[0]).shift();
-      if (sub) {
+      // check if defaultcmd
+      if (this.#defaultcmd) {
+        this.#defaultcmd.addOptions(this.#globalOptions);
+        this.#defaultcmd.ready(argv, `${this.#parent}${this.#name} `);
+      } else if (sub) {
         argv.shift();
         sub.addOptions(this.#globalOptions);
         sub.ready(argv, `${this.#parent}${this.#name} `);

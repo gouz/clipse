@@ -1,6 +1,11 @@
 import { describe, it, expect, mock, spyOn, beforeEach } from "bun:test";
 import { Clipse } from "../src";
 
+let calls: string[][] = [];
+console.log = (...args: string[]) => {
+  calls.push(args);
+};
+
 describe("clipse", () => {
   type t = { [key: string]: string | boolean | undefined };
   let args: t = {};
@@ -22,6 +27,7 @@ describe("clipse", () => {
   let mycli: Clipse;
 
   beforeEach(() => {
+    calls = [];
     mycli = new Clipse("mycli", "cli test", "v0.0.1");
     mycli
       .addOptions({
@@ -232,5 +238,16 @@ describe("clipse", () => {
     expect(opts).toEqual({
       gopt: "I'm global",
     });
+  });
+
+  it("should launch default command", () => {
+    mycli.defineDefaultCommand(subcli);
+    mycli.ready([""]);
+    expect(sub).toBeCalled();
+  });
+
+  it("shoud display the autocompletion file", () => {
+    mycli.ready(["generate-completion"]);
+    expect(calls[0]?.[0]).toBe("Copy this into ~/.clipse.mycli.bash");
   });
 });
