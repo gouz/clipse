@@ -1,16 +1,16 @@
 {
   "name": "clipse",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "devDependencies": {
     "@types/bun": "latest",
-    "bun-plugin-dts": "^0.3.0"
+    "bun-plugin-dts": "0.4.0"
   },
   "peerDependencies": {
-    "typescript": "^5"
+    "typescript": "^5.8.3"
   },
   "exports": {
     "types": "./dist/index.d.ts",
