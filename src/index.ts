@@ -1,6 +1,3 @@
-import { homedir } from "node:os";
-import { writeFileSync } from "node:fs";
-
 export type Clipse_Options = {
   [key: string]: {
     short?: string;
@@ -385,7 +382,10 @@ complete -F _${this.#name}_completions ${this.#name}
         await this.#action(args, opts);
       }
     } else {
-      await this.#action({}, options);
+      if (this.#defaultcmd) {
+        this.#defaultcmd.addOptions(this.#globalOptions);
+        this.#defaultcmd.ready(argv, `${this.#parent}${this.#name} `);
+      } else await this.#action({}, options);
     }
   }
 }
