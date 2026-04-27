@@ -323,18 +323,17 @@ complete -F _${this.#name}_completions ${this.#name}
         process.exit(0);
       }
       const sub = this.#subcommands.filter((s) => s.name === argv[0]).shift();
-      if (this.#defaultcmd) {
-        this.#defaultcmd.addOptions(this.#globalOptions);
-        this.#defaultcmd.ready(argv, `${this.#parent}${this.#name} `);
-      } else if (sub) {
+      if (sub) {
         argv.shift();
         sub.addOptions(this.#globalOptions);
         sub.ready(argv, `${this.#parent}${this.#name} `);
+      } else if (argv[0] === "generate-completion") {
+        this.#generateCompletion();
+        process.exit(0);
+      } else if (this.#defaultcmd) {
+        this.#defaultcmd.addOptions(this.#globalOptions);
+        this.#defaultcmd.ready(argv, `${this.#parent}${this.#name} `);
       } else {
-        if (argv[0] === "generate-completion") {
-          this.#generateCompletion();
-          process.exit(0);
-        }
         const parsedOptions = this.#parseOptions([...argv]);
         const opts = {
           ...options,
