@@ -1,9 +1,4 @@
-// node:os
-var homedir = () => "/";
-
 // src/index.ts
-var {writeFileSync} = (() => ({}));
-
 class Clipse {
   #name;
   #description = "";
@@ -12,10 +7,12 @@ class Clipse {
     help: { short: "h", description: "show help", type: "boolean" },
     version: { short: "v", description: "show version", type: "boolean" }
   };
+  #globalOptions = {};
   #arguments = [];
   #subcommands = [];
   #action = async () => {};
   #parent = "";
+  #defaultcmd = null;
   constructor(name, description = "", version = "") {
     this.#name = name;
     this.#description = description;
@@ -75,7 +72,10 @@ ${subs}
     return "";
   }
   #helpOptions() {
-    const options = Object.entries(this.#options).filter(([_, v]) => typeof v.long === "undefined");
+    const options = [
+      ...Object.entries(this.#options),
+      ...Object.entries(this.#globalOptions)
+    ].filter(([_, v]) => typeof v.long === "undefined");
     const maxLength = Math.max(...options.map(([k, v]) => this.#getVerboseOption({ [k]: v }).length)) + 1;
     const opts = options.map(([k, v]) => [
       `  \x1B[1m${this.#getVerboseOption({ [k]: v }).padEnd(maxLength)}\x1B[0m`,
@@ -122,12 +122,30 @@ You can generate a completion script for your CLI by running:
     });
     return this;
   }
+  addGlobalOptions(options = {}) {
+    Object.entries(options).forEach(([k, v], _) => {
+      this.#globalOptions = { ...this.#globalOptions, [k]: v };
+      if (typeof v?.short !== "undefined")
+        this.#globalOptions = {
+          ...this.#globalOptions,
+          [v.short]: {
+            ...v,
+            long: k
+          }
+        };
+    });
+    return this;
+  }
   addArguments(args) {
     this.#arguments.push(...args);
     return this;
   }
   addSubcommands(subcommands) {
     this.#subcommands.push(...subcommands);
+    return this;
+  }
+  defineDefaultCommand(cmd) {
+    this.#defaultcmd = cmd;
     return this;
   }
   action(a) {
@@ -202,8 +220,8 @@ You can generate a completion script for your CLI by running:
     return [
       ...new Set([
         ...this.#subcommands.map((c) => c.name),
-        ...Object.keys(this.#options).map((o) => `--${o}`),
-        ...Object.values(this.#options).map((o) => o.short ?? "").filter((f) => f !== "").map((o) => `-${o}`)
+        ...Object.keys({ ...this.#options, ...this.#globalOptions }).map((o) => `--${o}`),
+        ...Object.values({ ...this.#options, ...this.#globalOptions }).map((o) => o.short ?? "").filter((f) => f !== "").map((o) => `-${o}`)
       ])
     ].join(" ");
   }
@@ -238,10 +256,9 @@ _${this.#name}_completions()
 }
 complete -F _${this.#name}_completions ${this.#name}
 `;
-    writeFileSync(`${homedir()}/.clipse.${this.#name}.bash`, bash, {
-      flag: "w+"
-    });
-    console.log(`source ${homedir()}/.clipse.${this.#name}.bash`);
+    console.log(`Copy this into ~/.clipse.${this.#name}.bash`);
+    console.log(bash);
+    console.log(`Then execute: source ~/.clipse.${this.#name}.bash`);
   }
   async ready(argv = [], parent = "") {
     this.#parent = parent;
@@ -262,8 +279,12 @@ complete -F _${this.#name}_completions ${this.#name}
         process.exit(0);
       }
       const sub = this.#subcommands.filter((s) => s.name === argv[0]).shift();
-      if (sub) {
+      if (this.#defaultcmd) {
+        this.#defaultcmd.addOptions(this.#globalOptions);
+        this.#defaultcmd.ready(argv, `${this.#parent}${this.#name} `);
+      } else if (sub) {
         argv.shift();
+        sub.addOptions(this.#globalOptions);
         sub.ready(argv, `${this.#parent}${this.#name} `);
       } else {
         if (argv[0] === "generate-completion") {

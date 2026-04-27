@@ -2,27 +2,37 @@ var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __moduleCache = /* @__PURE__ */ new WeakMap;
+function __accessProp(key) {
+  return this[key];
+}
 var __toCommonJS = (from) => {
-  var entry = __moduleCache.get(from), desc;
+  var entry = (__moduleCache ??= new WeakMap).get(from), desc;
   if (entry)
     return entry;
   entry = __defProp({}, "__esModule", { value: true });
-  if (from && typeof from === "object" || typeof from === "function")
-    __getOwnPropNames(from).map((key) => !__hasOwnProp.call(entry, key) && __defProp(entry, key, {
-      get: () => from[key],
-      enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-    }));
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (var key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(entry, key))
+        __defProp(entry, key, {
+          get: __accessProp.bind(from, key),
+          enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
+        });
+  }
   __moduleCache.set(from, entry);
   return entry;
 };
+var __moduleCache;
+var __returnValue = (v) => v;
+function __exportSetter(name, newValue) {
+  this[name] = __returnValue.bind(null, newValue);
+}
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, {
       get: all[name],
       enumerable: true,
       configurable: true,
-      set: (newValue) => all[name] = () => newValue
+      set: __exportSetter.bind(all, name)
     });
 };
 
@@ -33,12 +43,6 @@ __export(exports_src, {
 });
 module.exports = __toCommonJS(exports_src);
 
-// node:os
-var homedir = () => "/";
-
-// src/index.ts
-var import_node_fs = (() => ({}));
-
 class Clipse {
   #name;
   #description = "";
@@ -47,10 +51,12 @@ class Clipse {
     help: { short: "h", description: "show help", type: "boolean" },
     version: { short: "v", description: "show version", type: "boolean" }
   };
+  #globalOptions = {};
   #arguments = [];
   #subcommands = [];
   #action = async () => {};
   #parent = "";
+  #defaultcmd = null;
   constructor(name, description = "", version = "") {
     this.#name = name;
     this.#description = description;
@@ -110,7 +116,10 @@ ${subs}
     return "";
   }
   #helpOptions() {
-    const options = Object.entries(this.#options).filter(([_, v]) => typeof v.long === "undefined");
+    const options = [
+      ...Object.entries(this.#options),
+      ...Object.entries(this.#globalOptions)
+    ].filter(([_, v]) => typeof v.long === "undefined");
     const maxLength = Math.max(...options.map(([k, v]) => this.#getVerboseOption({ [k]: v }).length)) + 1;
     const opts = options.map(([k, v]) => [
       `  \x1B[1m${this.#getVerboseOption({ [k]: v }).padEnd(maxLength)}\x1B[0m`,
@@ -157,12 +166,30 @@ You can generate a completion script for your CLI by running:
     });
     return this;
   }
+  addGlobalOptions(options = {}) {
+    Object.entries(options).forEach(([k, v], _) => {
+      this.#globalOptions = { ...this.#globalOptions, [k]: v };
+      if (typeof v?.short !== "undefined")
+        this.#globalOptions = {
+          ...this.#globalOptions,
+          [v.short]: {
+            ...v,
+            long: k
+          }
+        };
+    });
+    return this;
+  }
   addArguments(args) {
     this.#arguments.push(...args);
     return this;
   }
   addSubcommands(subcommands) {
     this.#subcommands.push(...subcommands);
+    return this;
+  }
+  defineDefaultCommand(cmd) {
+    this.#defaultcmd = cmd;
     return this;
   }
   action(a) {
@@ -237,8 +264,8 @@ You can generate a completion script for your CLI by running:
     return [
       ...new Set([
         ...this.#subcommands.map((c) => c.name),
-        ...Object.keys(this.#options).map((o) => `--${o}`),
-        ...Object.values(this.#options).map((o) => o.short ?? "").filter((f) => f !== "").map((o) => `-${o}`)
+        ...Object.keys({ ...this.#options, ...this.#globalOptions }).map((o) => `--${o}`),
+        ...Object.values({ ...this.#options, ...this.#globalOptions }).map((o) => o.short ?? "").filter((f) => f !== "").map((o) => `-${o}`)
       ])
     ].join(" ");
   }
@@ -273,10 +300,9 @@ _${this.#name}_completions()
 }
 complete -F _${this.#name}_completions ${this.#name}
 `;
-    import_node_fs.writeFileSync(`${homedir()}/.clipse.${this.#name}.bash`, bash, {
-      flag: "w+"
-    });
-    console.log(`source ${homedir()}/.clipse.${this.#name}.bash`);
+    console.log(`Copy this into ~/.clipse.${this.#name}.bash`);
+    console.log(bash);
+    console.log(`Then execute: source ~/.clipse.${this.#name}.bash`);
   }
   async ready(argv = [], parent = "") {
     this.#parent = parent;
@@ -297,8 +323,12 @@ complete -F _${this.#name}_completions ${this.#name}
         process.exit(0);
       }
       const sub = this.#subcommands.filter((s) => s.name === argv[0]).shift();
-      if (sub) {
+      if (this.#defaultcmd) {
+        this.#defaultcmd.addOptions(this.#globalOptions);
+        this.#defaultcmd.ready(argv, `${this.#parent}${this.#name} `);
+      } else if (sub) {
         argv.shift();
+        sub.addOptions(this.#globalOptions);
         sub.ready(argv, `${this.#parent}${this.#name} `);
       } else {
         if (argv[0] === "generate-completion") {
