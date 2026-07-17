@@ -250,4 +250,9 @@ describe("clipse", () => {
     mycli.ready(["generate-completion"]);
     expect(calls[0]?.[0]).toBe("Copy this into ~/.clipse.mycli.bash");
   });
+
+  it("should run the default no-op action when none is set", async () => {
+    const noop = new Clipse("noop");
+    await expect(noop.ready(["anything"])).resolves.toBeUndefined();
+  });
 });
