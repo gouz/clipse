@@ -1,141 +1,61 @@
 # clipse
 
-CLI Parsing So Easy
+**CLI parsing so easy** — a tiny, type-safe CLI builder for Bun & Node.
 
-## Introduction
+Declare your options and arguments, and clipse infers their types into a fully
+typed `action` callback. Subcommands, default commands, global options,
+auto-generated help, and bash completion are all included.
 
-Clipse helps you to build a CLI Tool. It provides a simple and intuitive way to define and handle command-line arguments and options, making it easier to create powerful and user-friendly command-line tools.
+📖 **Documentation: <https://gouz.github.io/clipse/>**
 
-```js
+## Install
+
+```sh
+bun add clipse   # or: npm install clipse
+```
+
+## Quick start
+
+```ts
 import { Clipse } from "clipse";
 
-const subcli = new Clipse("sub");
-subcli.action(() => {
-  sub();
-});
-
-const mycli = new Clipse("mycli", "cli test", "version");
-mycli
+new Clipse("greet", "say hello", "1.0.0")
   .addOptions({
-    opt: {
-      short: "o",
-      default: "test",
-      type: "string",
-      description: "an option for test",
-    },
+    loud: { short: "l", type: "boolean", description: "shout it" },
   })
-  .addArguments([{ name: "arg", description: "an argument for test" }])
-  .addSubcommands([subcli])
-  .action((a, o) => {
-    args = a;
-    opts = o;
+  .addArguments([{ name: "who", description: "who to greet" }])
+  .action((args, opts) => {
+    const msg = `Hello, ${args.who ?? "world"}!`;
+    console.log(opts.loud ? msg.toUpperCase() : msg);
   })
   .ready();
 ```
 
-Will done:
-
-```
-mycli version
-cli test
-
-Usage: mycli [options] [arguments]
-
-Subcommands:
-  sub   a sub command
-
-Options:
-  -h, --help      show help
-  -v, --version   show version
-  -o, --opt       an option for test  (default: test)
-
-Arguments:
-  arg   an argument for test
-
-You can generate a completion script for your CLI by running:
-$ mycli generate-completion
+```sh
+$ greet Alice --loud
+HELLO, ALICE!
 ```
 
-## Add Options
+`opts.loud` is a `boolean`, `args.who` is a `string` — inferred from what you
+declared. Unknown keys and wrong value types fail to compile.
 
-An option is defined with this following type:
+## Documentation
 
-```js
-export type Clipse_Options = {
-  [key: string]: {
-    short?: string;
-    long?: string;
-    optional?: boolean;
-    default?: string | boolean;
-    description?: string;
-    type?: "string" | "boolean";
-  };
-};
+The docs follow the [Diátaxis](https://diataxis.fr) framework:
+
+- **[Tutorial](https://gouz.github.io/clipse/tutorials/first-cli)** — build your first CLI step by step.
+- **[How-to guides](https://gouz.github.io/clipse/how-to/)** — options, arguments, subcommands, completion, and more.
+- **[Reference](https://gouz.github.io/clipse/reference/)** — the full `Clipse` API and types.
+- **[Explanation](https://gouz.github.io/clipse/explanation/)** — design philosophy and how type inference works.
+
+## Contributing to the docs
+
+```sh
+bun install
+bun run docs:dev     # local preview at http://localhost:5173
+bun run docs:build   # production build
 ```
 
-Then, if your CLI will have an option called `opt`, which can be shortened with `o`, you can declare your option like this:
+## License
 
-```js
-cli.addOptions({
-  opt: {
-    short: 'o',
-  }
-})
-```
-
-## Add Arguments
-
-An argument is defined with this following type:
-
-```js
-export type Clipse_Argument = {
-  name: string;
-  description?: string;
-};
-```
-
-Example:
-
-Your CLI definition:
-
-```js
-const mycli = new Clipse("mycli", "cli test", "version");
-mycli
-  .addArguments([{ name: "arg", description: "an argument for test" }])
-  .action((a, o) => {
-    args = a;
-    opts = o;
-  });
-```
-
-If you call your cli like this:
-
-```
-mycli test
-```
-
-Then in the action function, your args will be :
-
-```json
-{
-  "arg": "test"
-}
-```
-
-## Add Subcommands
-
-Clipse allows you to have sub commands with your Clipse
-
-Attention, you must not name an argument like a subcommand !
-
-## Generate Bash Completion Script
-
-Clipse includes a bash completion script generator. You can generate it by calling the internal subcommand `generate-completion` of your CLI.
-
-Example:
-
-```bash
-mycli generate-completion
-```
-
-It will generate a `.clipse.<name>.bash` file in your home directory, which you can source to enable bash completion for your CLI.
+[MIT](./LICENSE) © gouz
