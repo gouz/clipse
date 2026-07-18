@@ -3,33 +3,34 @@
 clipse ships a **bash** completion generator. Every CLI automatically gains a
 built-in `generate-completion` subcommand.
 
-## Generate the script
+## Generate and install it
 
 ```sh
 $ mycli generate-completion
 ```
 
-This prints instructions and a completion script:
+This does everything for you:
+
+1. Writes the completion script to `~/.clipse.mycli.bash`.
+2. Adds `source ~/.clipse.mycli.bash` to your shell's startup file (once) so every
+   new shell picks it up. The file is chosen from `$SHELL`: `~/.zshrc` for zsh,
+   otherwise `~/.bashrc`.
+3. Tells you the command to run to enable it in the current shell.
 
 ```
-Copy this into ~/.clipse.mycli.bash
-#!/usr/bin/env bash
-_mycli_completions()
-{
-    ...
-}
-complete -F _mycli_completions mycli
-Then execute: source ~/.clipse.mycli.bash
+Completion script written to /home/you/.clipse.mycli.bash
+Added "source /home/you/.clipse.mycli.bash" to /home/you/.zshrc
+To enable completion in the current shell, run: source /home/you/.clipse.mycli.bash
 ```
 
-## Install it
+The script is bash syntax, but it works under **zsh** too: it loads zsh's
+`bashcompinit` shim automatically when sourced from a zsh shell.
 
-Save the script and source it from your shell profile:
+A running process cannot `source` into its parent shell, so the last step is left
+for you to run once in the current terminal:
 
 ```sh
-mycli generate-completion > ~/.clipse.mycli.bash
-echo "source ~/.clipse.mycli.bash" >> ~/.bashrc
-source ~/.bashrc
+source ~/.clipse.mycli.bash
 ```
 
 Now pressing <kbd>Tab</kbd> completes your subcommands and options:

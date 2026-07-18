@@ -35,7 +35,8 @@ When you call `ready()`, clipse dispatches in this order:
 1. `-h` / `--help` → print help and exit.
 2. `-v` / `--version` → print the version and exit.
 3. First word matches a **subcommand** → run that subcommand.
-4. First word is `generate-completion` → print the completion script and exit.
+4. First word is `generate-completion` → write the completion script to
+   `~/.clipse.<name>.bash`, source it from `~/.bashrc`, and exit.
 5. A **default command** is defined → run it with the remaining arguments.
 6. Otherwise → run this command's own `action`.
 

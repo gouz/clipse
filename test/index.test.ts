@@ -246,9 +246,57 @@ describe("clipse", () => {
     expect(sub).toBeCalled();
   });
 
-  it("shoud display the autocompletion file", () => {
+  const mockFs = (files: Record<string, string>) => {
+    mock.module("node:fs", () => ({
+      writeFileSync: (path: string, content: string) => {
+        files[path] = content;
+      },
+      appendFileSync: (path: string, content: string) => {
+        files[path] = (files[path] ?? "") + content;
+      },
+      readFileSync: (path: string) => {
+        if (path in files) return files[path];
+        throw Object.assign(new Error("ENOENT"), { code: "ENOENT" });
+      },
+    }));
+    mock.module("node:os", () => ({ homedir: () => "/home/tester" }));
+  };
+
+  it("should write the autocompletion file and source it from .bashrc", () => {
+    spyOn(process, "exit").mockImplementation(() => undefined as never);
+    const files: Record<string, string> = {};
+    mockFs(files);
+    const prevShell = process.env.SHELL;
+    process.env.SHELL = "/bin/bash";
+
     mycli.ready(["generate-completion"]);
-    expect(calls[0]?.[0]).toBe("Copy this into ~/.clipse.mycli.bash");
+
+    const scriptPath = "/home/tester/.clipse.mycli.bash";
+    expect(files[scriptPath]).toContain("_mycli_completions");
+    expect(files[scriptPath]).toContain("complete -F _mycli_completions mycli");
+    expect(files[scriptPath]).toContain("bashcompinit");
+    expect(files["/home/tester/.bashrc"]).toContain(`source ${scriptPath}`);
+    expect(calls[0]?.[0]).toBe(`Completion script written to ${scriptPath}`);
+
+    process.env.SHELL = prevShell;
+    mock.restore();
+  });
+
+  it("should source completion from .zshrc under zsh", () => {
+    spyOn(process, "exit").mockImplementation(() => undefined as never);
+    const files: Record<string, string> = {};
+    mockFs(files);
+    const prevShell = process.env.SHELL;
+    process.env.SHELL = "/bin/zsh";
+
+    mycli.ready(["generate-completion"]);
+
+    const scriptPath = "/home/tester/.clipse.mycli.bash";
+    expect(files["/home/tester/.zshrc"]).toContain(`source ${scriptPath}`);
+    expect(files["/home/tester/.bashrc"]).toBeUndefined();
+
+    process.env.SHELL = prevShell;
+    mock.restore();
   });
 
   it("should run the default no-op action when none is set", async () => {
