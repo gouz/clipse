@@ -42,6 +42,9 @@ __export(exports_src, {
   Clipse: () => Clipse
 });
 module.exports = __toCommonJS(exports_src);
+var import_node_fs = require("node:fs");
+var import_node_os = require("node:os");
+var import_node_path = require("node:path");
 
 class Clipse {
   #name;
@@ -277,6 +280,11 @@ You can generate a completion script for your CLI by running:
   generateCompletionScript() {
     return `
 #!/usr/bin/env bash
+# zsh can run bash-style completions, but only once bashcompinit is loaded.
+if [ -n "\${ZSH_VERSION:-}" ]; then
+    autoload -U +X compinit && compinit
+    autoload -U +X bashcompinit && bashcompinit
+fi
 _${this.#name}_completions()
 {
     local cur prev
@@ -306,10 +314,30 @@ _${this.#name}_completions()
 complete -F _${this.#name}_completions ${this.#name}
 `;
   }
+  #shellRcFile() {
+    const shell = process.env.SHELL ?? "";
+    if (shell.endsWith("zsh"))
+      return import_node_path.join(import_node_os.homedir(), ".zshrc");
+    return import_node_path.join(import_node_os.homedir(), ".bashrc");
+  }
   #generateCompletion() {
-    console.log(`Copy this into ~/.clipse.${this.#name}.bash`);
-    console.log(this.generateCompletionScript());
-    console.log(`Then execute: source ~/.clipse.${this.#name}.bash`);
+    const filePath = import_node_path.join(import_node_os.homedir(), `.clipse.${this.#name}.bash`);
+    import_node_fs.writeFileSync(filePath, this.generateCompletionScript());
+    console.log(`Completion script written to ${filePath}`);
+    const rcFile = this.#shellRcFile();
+    const sourceLine = `source ${filePath}`;
+    let alreadySourced = false;
+    try {
+      alreadySourced = import_node_fs.readFileSync(rcFile, "utf8").includes(sourceLine);
+    } catch {}
+    if (!alreadySourced) {
+      import_node_fs.appendFileSync(rcFile, `
+# clipse completion for ${this.#name}
+${sourceLine}
+`);
+      console.log(`Added "${sourceLine}" to ${rcFile}`);
+    }
+    console.log(`To enable completion in the current shell, run: ${sourceLine}`);
   }
   async ready(argv = [], parent = "") {
     this.#parent = parent;

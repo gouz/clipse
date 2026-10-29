@@ -1,4 +1,8 @@
 // src/index.ts
+import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+
 class Clipse {
   #name;
   #description = "";
@@ -233,6 +237,11 @@ You can generate a completion script for your CLI by running:
   generateCompletionScript() {
     return `
 #!/usr/bin/env bash
+# zsh can run bash-style completions, but only once bashcompinit is loaded.
+if [ -n "\${ZSH_VERSION:-}" ]; then
+    autoload -U +X compinit && compinit
+    autoload -U +X bashcompinit && bashcompinit
+fi
 _${this.#name}_completions()
 {
     local cur prev
@@ -262,10 +271,30 @@ _${this.#name}_completions()
 complete -F _${this.#name}_completions ${this.#name}
 `;
   }
+  #shellRcFile() {
+    const shell = process.env.SHELL ?? "";
+    if (shell.endsWith("zsh"))
+      return join(homedir(), ".zshrc");
+    return join(homedir(), ".bashrc");
+  }
   #generateCompletion() {
-    console.log(`Copy this into ~/.clipse.${this.#name}.bash`);
-    console.log(this.generateCompletionScript());
-    console.log(`Then execute: source ~/.clipse.${this.#name}.bash`);
+    const filePath = join(homedir(), `.clipse.${this.#name}.bash`);
+    writeFileSync(filePath, this.generateCompletionScript());
+    console.log(`Completion script written to ${filePath}`);
+    const rcFile = this.#shellRcFile();
+    const sourceLine = `source ${filePath}`;
+    let alreadySourced = false;
+    try {
+      alreadySourced = readFileSync(rcFile, "utf8").includes(sourceLine);
+    } catch {}
+    if (!alreadySourced) {
+      appendFileSync(rcFile, `
+# clipse completion for ${this.#name}
+${sourceLine}
+`);
+      console.log(`Added "${sourceLine}" to ${rcFile}`);
+    }
+    console.log(`To enable completion in the current shell, run: ${sourceLine}`);
   }
   async ready(argv = [], parent = "") {
     this.#parent = parent;
