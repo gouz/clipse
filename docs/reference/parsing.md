@@ -12,7 +12,7 @@ This page describes exactly how `ready()` turns a list of arguments into the
 3. `argv[0]` matches a subcommand name → dispatch to that subcommand with the rest
    of `argv`.
 4. `argv[0]` is `generate-completion` → write the completion script to
-   `~/.clipse.<name>.bash`, source it from `~/.bashrc`, and exit.
+   `~/.clipse.<name>.bash`, source it from the shell startup file (`~/.zshrc` under zsh, else `~/.bashrc`), and exit.
 5. A default command is defined → run it with `argv`.
 6. Otherwise → parse `argv` and run this command's `action`.
 
