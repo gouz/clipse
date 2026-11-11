@@ -42,7 +42,7 @@ Short entries match `-` followed by letters, digits, and `=`.
 | `-ab value`     | booleans `a`,`b` set to `true`; `value` assigned to last non-boolean |
 
 Short flags are resolved to their long name through the option's `short` field.
-Passing an unknown option throws `Unknown option: -x` / `Unknown option: --name`.
+An unknown option prints `unknown option --name, see "mycli sub --help"` on stderr and exits with code `1`, without running the action.
 
 ## Arguments
 

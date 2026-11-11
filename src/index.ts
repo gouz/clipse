@@ -82,6 +82,9 @@ type EmptyShape = NonNullable<unknown>;
 // biome-ignore lint/suspicious/noExplicitAny: heterogeneous subcommand shapes
 type AnyClipse = Clipse<any, any>;
 
+/** An option the command does not declare: reported to the user, not thrown to the app. */
+class UnknownOptionError extends Error {}
+
 export class Clipse<
   TOpts extends Record<string, string | boolean> = EmptyShape,
   TArgs extends Record<string, string> = EmptyShape,
@@ -271,8 +274,7 @@ You can generate a completion script for your CLI by running:
   // Resolve a long name from a short flag, throwing on an unknown flag.
   #longFromShort(short: string) {
     const long = this.#shortMap[short];
-    if (typeof long === "undefined")
-      throw new Error(`Unknown option: -${short}`);
+    if (typeof long === "undefined") throw new UnknownOptionError(`-${short}`);
     return long;
   }
 
@@ -281,7 +283,7 @@ You can generate a completion script for your CLI by running:
       typeof this.#options[name] === "undefined" &&
       typeof this.#globalOptions[name] === "undefined"
     )
-      throw new Error(`Unknown option: --${name}`);
+      throw new UnknownOptionError(`--${name}`);
   }
 
   #parseShortOptions(argv: string[], ar: string, options: ParsedOptions) {
@@ -332,6 +334,19 @@ You can generate a completion script for your CLI by running:
       }
     }
     argv.shift();
+  }
+
+  // an unknown option is the user's mistake: say so, without a stack trace
+  #parseOptionsOrExit(argv: string[]) {
+    try {
+      return this.#parseOptions([...argv]);
+    } catch (e) {
+      if (!(e instanceof UnknownOptionError)) throw e;
+      console.error(
+        `unknown option ${e.message}, see "${this.#parent}${this.#name} --help"`,
+      );
+      return process.exit(1);
+    }
   }
 
   #parseOptions(argv: string[]) {
@@ -441,7 +456,9 @@ complete -F _${this.#name}_completions ${this.#name}
       );
       console.log(`Added "${sourceLine}" to ${rcFile}`);
     }
-    console.log(`To enable completion in the current shell, run: ${sourceLine}`);
+    console.log(
+      `To enable completion in the current shell, run: ${sourceLine}`,
+    );
   }
 
   async ready(argv: string[] = [], parent = "") {
@@ -475,7 +492,7 @@ complete -F _${this.#name}_completions ${this.#name}
         this.#defaultcmd.addOptions(this.#globalOptions);
         await this.#defaultcmd.ready(argv, `${this.#parent}${this.#name} `);
       } else {
-        const parsedOptions = this.#parseOptions([...argv]);
+        const parsedOptions = this.#parseOptionsOrExit(argv);
         const opts = {
           ...options,
           ...parsedOptions.options,

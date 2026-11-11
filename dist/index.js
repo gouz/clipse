@@ -3,6 +3,9 @@ import { appendFileSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
+class UnknownOptionError extends Error {
+}
+
 class Clipse {
   #name;
   #description = "";
@@ -147,12 +150,12 @@ You can generate a completion script for your CLI by running:
   #longFromShort(short) {
     const long = this.#shortMap[short];
     if (typeof long === "undefined")
-      throw new Error(`Unknown option: -${short}`);
+      throw new UnknownOptionError(`-${short}`);
     return long;
   }
   #assertKnownLong(name) {
     if (typeof this.#options[name] === "undefined" && typeof this.#globalOptions[name] === "undefined")
-      throw new Error(`Unknown option: --${name}`);
+      throw new UnknownOptionError(`--${name}`);
   }
   #parseShortOptions(argv, ar, options) {
     if (ar.includes("=")) {
@@ -201,6 +204,16 @@ You can generate a completion script for your CLI by running:
       }
     }
     argv.shift();
+  }
+  #parseOptionsOrExit(argv) {
+    try {
+      return this.#parseOptions([...argv]);
+    } catch (e) {
+      if (!(e instanceof UnknownOptionError))
+        throw e;
+      console.error(`unknown option ${e.message}, see "${this.#parent}${this.#name} --help"`);
+      return process.exit(1);
+    }
   }
   #parseOptions(argv) {
     const options = {};
@@ -325,7 +338,7 @@ ${sourceLine}
         this.#defaultcmd.addOptions(this.#globalOptions);
         await this.#defaultcmd.ready(argv, `${this.#parent}${this.#name} `);
       } else {
-        const parsedOptions = this.#parseOptions([...argv]);
+        const parsedOptions = this.#parseOptionsOrExit(argv);
         const opts = {
           ...options,
           ...parsedOptions.options

@@ -1,4 +1,4 @@
-import { describe, it, expect, mock, spyOn, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it, mock, spyOn } from "bun:test";
 import { Clipse } from "../src";
 
 let calls: string[][] = [];
@@ -302,5 +302,34 @@ describe("clipse", () => {
   it("should run the default no-op action when none is set", async () => {
     const noop = new Clipse("noop");
     await expect(noop.ready(["anything"])).resolves.toBeUndefined();
+  });
+
+  it("reports an unknown option and exits with 1", async () => {
+    const errors: string[] = [];
+    const errorSpy = spyOn(console, "error").mockImplementation((m: string) => {
+      errors.push(m);
+    });
+    const exitSpy = spyOn(process, "exit").mockImplementation((() => {
+      throw new Error("exit");
+    }) as never);
+    const action = mock(() => {});
+    const cli = new Clipse("cli", "a cli");
+    const install = new Clipse("install", "an install");
+    install
+      .addOptions({ force: { type: "boolean", short: "f" } })
+      .action(action);
+    cli.addSubcommands([install]);
+
+    await expect(cli.ready(["install", "--nope"])).rejects.toThrow("exit");
+    await expect(cli.ready(["install", "-z"])).rejects.toThrow("exit");
+    expect(errors).toEqual([
+      'unknown option --nope, see "cli install --help"',
+      'unknown option -z, see "cli install --help"',
+    ]);
+    expect(exitSpy).toHaveBeenCalledWith(1);
+    expect(action).not.toHaveBeenCalled();
+
+    errorSpy.mockRestore();
+    exitSpy.mockRestore();
   });
 });
