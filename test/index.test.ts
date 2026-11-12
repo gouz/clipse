@@ -94,6 +94,18 @@ describe("clipse", () => {
     expect(spy).toHaveBeenCalled();
   });
 
+  it("should list the default command options and arguments in the help", () => {
+    const def = new Clipse("def", "the default command")
+      .addOptions({ port: { short: "p", type: "string", description: "port" } })
+      .addArguments([{ name: "talk", description: "the talk" }]);
+    const help = new Clipse("root", "root cli")
+      .defineDefaultCommand(def)
+      .helpText();
+    expect(help).toContain("--port");
+    expect(help).toContain("talk");
+    expect(help).toContain("--help");
+  });
+
   it("should give me arguments and options", () => {
     mycli.ready(["--opt", "plop", "plip"]);
     expect(args).toEqual({ arg: "plip" });

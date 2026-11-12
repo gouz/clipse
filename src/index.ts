@@ -169,10 +169,12 @@ export class Clipse<
   }
 
   #helpOptions() {
-    const options = [
-      ...Object.entries(this.#options),
-      ...Object.entries(this.#globalOptions),
-    ];
+    // the default command runs when no subcommand is given: list its options too
+    const options = Object.entries({
+      ...(this.#defaultcmd ? this.#defaultcmd.#options : {}),
+      ...this.#options,
+      ...this.#globalOptions,
+    });
     const maxLength =
       Math.max(...options.map(([k, v]) => this.#verboseOption(k, v).length)) +
       1;
@@ -191,10 +193,14 @@ export class Clipse<
 
   #helpArguments() {
     let args = "";
-    if (this.#arguments.length) {
-      const maxLength =
-        Math.max(...this.#arguments.map((a) => a.name.length)) + 1;
-      args = this.#arguments
+    const list = this.#arguments.length
+      ? this.#arguments
+      : this.#defaultcmd
+        ? this.#defaultcmd.#arguments
+        : [];
+    if (list.length) {
+      const maxLength = Math.max(...list.map((a) => a.name.length)) + 1;
+      args = list
         .map(
           (a) =>
             `  \x1b[1m${a.name.padEnd(maxLength)}\x1b[0m ${this.#helpDesc(a.description ?? "")}\n`,
